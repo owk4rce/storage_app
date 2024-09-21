@@ -1,3 +1,4 @@
+require('dotenv').config();
 const mongoose = require("mongoose");
 const readline = require("readline");   //import of readline
 const { listAllMaterials, addMaterial, deleteMaterial, 
@@ -10,7 +11,7 @@ const interface = readline.createInterface({    //creating of interface
 
 mongoose
   .connect(
-    "mongodb+srv://owk4rce:G2GQo66ivmBrBEZE@cluster0.0u9wb.mongodb.net/storage_app?retryWrites=true&w=majority&appName=Cluster0"
+    process.env.DB_CONNECT  // look at .env.sample
   )
   .then(() => {
     console.log("\x1b[32m%s\x1b[0m","MongoDB connected successfully");  // "\x1b[32m%s\x1b[0m" - green colour
