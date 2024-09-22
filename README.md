@@ -41,7 +41,8 @@ Before setting up the project, ensure you have the following installed:
 
     ```bash
     cp .env.sample .env
-
+    ```
+    
     Update the values in the .env file, including your MongoDB connection string.
 
 5. **Run the project:**
