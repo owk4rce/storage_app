@@ -38,7 +38,7 @@ async function listAllTools() {
     }
   }
 
-// function to create tool and save to db (identification: )
+// function to create tool and save to db (identification: name, cost)
 async function addTool(name, amount, cost, usagePurpose) {
     const isFound = await Item.findOne({name, cost}) // checking if this tool already exists
     if(!isFound) {  //if not
@@ -76,6 +76,7 @@ async function addTool(name, amount, cost, usagePurpose) {
   }
 }
 
+//function to delete tool
 async function deleteTool(indArray, allTools) {
     for (const index of indArray) {
         if (index >= 0 && index < allTools.length) {
@@ -108,6 +109,7 @@ async function deleteTool(indArray, allTools) {
     }
 }
 
+//function to fix tool
 async function fixTool(indArray, allTools) {
     for (const index of indArray) {
         if (index >= 0 && index < allTools.length) {
@@ -199,40 +201,6 @@ async function addMaterial(name, amount, cost, supplier, quality) {
   }
 
 // function to delete material from db or decrease amount
-/*async function deleteMaterial(name, cost, supplier, quality, quantity) {
-    const isFound = await Material.findOne({name, cost, supplier, quality}) // checking if this material exists
-    if(!isFound) {  
-        console.error("The material not found.")
-        return null
-    }
-    else if (quantity >= isFound.amount){
-            try {
-                const deletedMaterial = await Material.deleteOne(isFound._id)
-                console.log("\x1b[32m%s\x1b[0m", "The material completely deleted from db.")
-                return deletedMaterial
-            } catch (error) {
-                console.error("Error deleting material:", error.message);
-                return null
-            }  
-        
-        }
-        else {
-            isFound.amount -= quantity
-            try {
-                const decreasedMaterial = isFound.save()
-                console.log("\x1b[33m%s\x1b[0m", "The amount of the material decreased")
-                return decreasedMaterial
-            }
-            catch(error) {
-                console.error("Error saving decreased amount of the material:", error.message);
-                return null
-            }
-            
-
-        }
-    
-  }*/
-
 async function deleteMaterial(material, quantity) {
     if (quantity >= material.amount){
         try {
@@ -328,6 +296,7 @@ async function deleteUser(user) {
 async function buildSomething(user, toolsToBuild, materialsToBuild) {
     try {
         await user.buildSomething(toolsToBuild, materialsToBuild)
+        console.log("\x1b[32m%s\x1b[0m","Something is built")
     } catch (error) {
         console.error("Error building something:", error.message);
         return null
