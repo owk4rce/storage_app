@@ -17,7 +17,6 @@ const itemSchema = new mongoose.Schema({
     name: {
         type: String,
         required: true,
-        unique: true,
         trim: true,
     },
     amount: { 
@@ -46,15 +45,15 @@ itemSchema.methods.addNew = async function(quantity) {
     if (Number.isInteger(quantity) && quantity > 0) {  //check if the variable is correct
         this.amount += quantity
         try {
-            await this.save()
-            return true
+            const savedItem = await this.save()
+            return savedItem
         } catch (error) {
             console.error("Something went wrong while saving new info: ", error)
-            return false
+            return null
         }        
     }
     
-    return false
+    return null
 };
 
 const Item = mongoose.model("Item", itemSchema);
@@ -63,25 +62,29 @@ const Item = mongoose.model("Item", itemSchema);
 ------------
 attributes:  
 ------------
-usagePurpose (String): The purpose or use of the tool.
-borrowedByUserIds (Array of Strings): List of user objectids who borrowed the tool.
+parent: link to the parent Item that stores cost and amount of all identical tools with different conditions
+usagePurpose (String): The purpose of using the tool.
+borrowedByUserIds (Array of objectIds): List of user objectIds who borrowed the tool.
 condition (Number): from 1 - 100 the state of it.
 ------------
 methods:
 ------------
 useBy(userId): If it's condition is more than 15, use it and remove 10. Otherwise you can’t, also receives a user who used it
-fixTool(): Add 20 to condition */
+fixTool(): Add 20 to condition but not more than 100 in total*/
 
 const toolSchema = new mongoose.Schema({
+    parent: {
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: 'Item'
+    },
     usagePurpose: {
         type: String,
-        required: true,
+        default: "Build something",
         trim: true
     },
     borrowedByUserIds: [{ 
         type: mongoose.Schema.Types.ObjectId, 
-        ref: 'User',  
-        required: true
+        ref: 'User'
     }], 
     condition: {
         type: Number,
@@ -96,12 +99,14 @@ const toolSchema = new mongoose.Schema({
 toolSchema.methods.useBy = async function(userId) {
     if(this.condition > 15) {
         this.condition -= 10
-        this.borrowedByUserIds.push(userId)
-
+        if (!this.borrowedByUserIds.includes(userId)) {
+            this.borrowedByUserIds.push(userId)
+        }
+        
         try{
             await this.save()
             return true
-        } catch{
+        } catch(error){
             console.error("Something went wrong while saving new info: ", error)
             return false
         }
@@ -112,13 +117,14 @@ toolSchema.methods.useBy = async function(userId) {
 };
 
 toolSchema.methods.fixTool = async function() {
-    Math.min(this.condition + 20, 100)
+    console.log(this.condition)
+    this.condition = Math.min(this.condition + 20, 100)
     try{
-        await this.save()
-        return true
+        const savedTool = await this.save()
+        return savedTool
     } catch{
         console.error("Something went wrong while saving new info: ", error)
-        return false
+        return null
     }
 }
 
@@ -183,7 +189,7 @@ const userSchema = new mongoose.Schema({
 },
     {
         collation: { locale: 'en', strength: 2 }  // TeXt = text
-      }
+    }
     
 );
 
@@ -195,19 +201,29 @@ userSchema.methods.useTool = async function(toolId) {
         return false
     }
 
-    const check = await Tool.useBy(this._id)
+    const check = await isFound.useBy(this._id)
 
     return (check) ? true : false
 
 }
 
 userSchema.methods.getUsedTools = async function() {
-    const tools = await Tool.find({ borrowedByUserIds: userId }, 'name');
+    const tools = await Tool.find({ borrowedByUserIds: this._id });
     return tools
 }
 
-userSchema.methods.buildSomething = async function(toolsObj, materialsObj) {
+userSchema.methods.buildSomething = async function(toolsToBuild, materialsToBuild) {
+    for (let tool of toolsToBuild) {
+        await this.useTool(tool._id)
+    }
+
+    for (let material of materialsToBuild) {
+         
+        material.material.use(material.quantity)
+    }
+
     
+    return true
 }
 
 const User = mongoose.model("User", userSchema);
